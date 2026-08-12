@@ -1,8 +1,34 @@
 # AGENTS.md
 
-- Treat API, event, error, and state semantics as compatibility contracts.
-- Every external field needs type, unit, sensitivity, and compatibility behavior.
-- Writes and events require stable idempotency semantics.
-- Unknown optional fields should remain forward-compatible.
-- Breaking changes require a major version and coordinated migration plan.
-- Do not publish internal management, security, or anti-abuse fields.
+## 开始前
+
+- 先读取 `../novagrid-project/AGENTS.md`、`docs/stages/CURRENT_STAGE.md`、当前任务卡和接口专题设计；
+- 一张已批准任务卡对应一个短分支和一个 Pull Request；
+- 开始修改前检查当前分支、`git status`、已发布 Tag 和消费者版本。
+
+## 语言与提交
+
+- 项目自有脚本、Schema 说明和示例中新建或修改的注释必须使用简体中文；
+- 工具自动生成代码、第三方内容和标准许可证文本除外；
+- OpenAPI/Protobuf/JSON 字段、错误码和机器标识保持英文；
+- Commit 使用 `<type>(<scope>): <简体中文摘要>`，正文也使用简体中文；
+- 分支名称保持 ASCII，并包含任务编号。
+
+## 协议端约束
+
+- API、事件、错误和状态语义都是兼容性契约；
+- 每个外部字段必须定义类型、单位、必选性、敏感性和兼容行为；
+- 写操作和事件必须定义稳定的幂等语义；
+- 未知可选字段保持向前兼容；
+- 删除字段、改变含义或状态语义必须升级 major 并提供迁移计划；
+- 同时提供合法、非法、边界和兼容样例，全部可机器校验；
+- 不公开内部管理、安全、反作弊和生产环境字段；
+- Control 和 Node 只依赖发布 Tag，禁止长期依赖漂移的 `main`。
+
+## 完成门禁
+
+- 格式、Schema、样例、兼容和生成可再现性测试全部通过；
+- 不允许无任务编号的 TODO、FIXME、HACK、死代码和无用依赖；
+- 当前任务引入的测试失败以及 P0/P1 技术债不得进入 `main`；
+- 破坏性变更必须有项目负责人批准的 ADR；
+- 完成后填写项目主档中的任务交接和技术债记录。
