@@ -1,0 +1,1 @@
+{"model":"novagrid-chat-7b-v1","messages":[{"role":"user","content":"测试不支持字段"}],"tools":[{"type":"function"}]}

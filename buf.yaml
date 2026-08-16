@@ -1,0 +1,17 @@
+version: v2
+modules:
+  - path: protobuf
+lint:
+  use:
+    - STANDARD
+  except:
+    # 仓库公开目录已冻结为 protobuf/node/v1，package 仍保留组织前缀。
+    - PACKAGE_DIRECTORY_MATCH
+    # 双向流信封采用方向语义名称，避免把长连接消息误称为单次请求响应。
+    - RPC_REQUEST_STANDARD_NAME
+    - RPC_RESPONSE_STANDARD_NAME
+    # NodeChannel 是已确认协议名，不能为了 lint 改变公开服务标识。
+    - SERVICE_SUFFIX
+breaking:
+  use:
+    - FILE

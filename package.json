@@ -1,0 +1,26 @@
+{
+  "name": "@novagrid/protocol",
+  "version": "0.1.0",
+  "private": true,
+  "description": "NovaGrid v1 机器可校验协议",
+  "type": "module",
+  "engines": {
+    "node": ">=20.17.0",
+    "npm": ">=10.0.0"
+  },
+  "scripts": {
+    "lint:openapi": "node scripts/check-openapi.mjs",
+    "lint:proto": "node scripts/check-protobuf.mjs",
+    "validate:examples": "node scripts/validate-examples.mjs",
+    "validate:repository": "node scripts/check-repository.mjs",
+    "check:reproducible": "node scripts/check-reproducible.mjs",
+    "test": "npm run lint:openapi && npm run lint:proto && npm run validate:examples && npm run check:reproducible && npm run validate:repository"
+  },
+  "devDependencies": {
+    "@bufbuild/buf": "1.72.0",
+    "@seriousme/openapi-schema-validator": "2.9.1",
+    "ajv": "8.20.0",
+    "ajv-formats": "3.0.1",
+    "yaml": "2.9.0"
+  }
+}

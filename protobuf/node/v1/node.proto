@@ -1,0 +1,334 @@
+syntax = "proto3";
+
+package novagrid.node.v1;
+
+import "google/protobuf/timestamp.proto";
+
+// NodeChannel 维护节点主动建立的双向长连接，不允许 Control 下发任意命令。
+service NodeChannel {
+  // Connect 在单一连接纪元内交换注册、心跳、任务租约和结果消息。
+  rpc Connect(stream AgentMessage) returns (stream ControlMessage);
+}
+
+// AgentMessage 是 Agent 到 Control 的稳定消息信封。
+message AgentMessage {
+  string message_id = 1;
+  string node_id = 2;
+  string device_binding_id = 3;
+  google.protobuf.Timestamp sent_at = 4;
+  string trace_id = 5;
+  string protocol_version = 6;
+  uint64 connection_epoch = 7;
+
+  oneof payload {
+    Hello hello = 20;
+    Heartbeat heartbeat = 21;
+    PreflightResult preflight_result = 22;
+    ModelReady model_ready = 23;
+    OfferReply offer_reply = 24;
+    LeaseRenewal lease_renewal = 25;
+    ChatResult chat_result = 26;
+    DrainRequested drain_requested = 27;
+    NodeError error = 28;
+  }
+}
+
+// ControlMessage 是 Control 到 Agent 的白名单消息信封。
+message ControlMessage {
+  string message_id = 1;
+  string node_id = 2;
+  google.protobuf.Timestamp sent_at = 3;
+  string trace_id = 4;
+  string protocol_version = 5;
+  uint64 connection_epoch = 6;
+
+  oneof payload {
+    Welcome welcome = 20;
+    ModelRelease model_release = 21;
+    TaskOffer task_offer = 22;
+    LeaseGranted lease_granted = 23;
+    LeaseRevoked lease_revoked = 24;
+    ConfigUpdate config_update = 25;
+    DrainCommand drain_command = 26;
+    UpgradeNotice upgrade_notice = 27;
+    ProtocolError error = 28;
+  }
+}
+
+// Hello 声明节点身份、版本和当前唯一 GPU 能力。
+message Hello {
+  string agent_version = 1;
+  NodePlatform platform = 2;
+  string os_version = 3;
+  string gpu_id = 4;
+  string gpu_name = 5;
+  uint64 vram_bytes = 6;
+  string driver_version = 7;
+  string runtime_version = 8;
+  repeated string loaded_model_release_ids = 9;
+}
+
+// Welcome 确认连接纪元及服务端时间，不授予任务执行权。
+message Welcome {
+  google.protobuf.Timestamp server_time = 1;
+  uint32 heartbeat_interval_milliseconds = 2;
+  uint32 lease_renew_interval_milliseconds = 3;
+  string minimum_agent_version = 4;
+}
+
+// Heartbeat 提供调度所需的最小资源摘要，不包含宿主机个人活动。
+message Heartbeat {
+  NodeState state = 1;
+  uint64 free_vram_bytes = 2;
+  uint32 gpu_temperature_millicelsius = 3;
+  uint32 gpu_power_milliwatts = 4;
+  string active_lease_id = 5;
+  google.protobuf.Timestamp observed_at = 6;
+}
+
+// PreflightResult 表示节点能否进入 READY 的结构化预检结果。
+message PreflightResult {
+  bool eligible = 1;
+  repeated PreflightCheck checks = 2;
+  google.protobuf.Timestamp completed_at = 3;
+}
+
+// PreflightCheck 是单项预检结果，detail 必须脱敏。
+message PreflightCheck {
+  string code = 1;
+  CheckStatus status = 2;
+  string detail = 3;
+}
+
+// ModelReady 表示指定哈希的模型已经校验并成功加载。
+message ModelReady {
+  string model_release_id = 1;
+  string artifact_sha256 = 2;
+  uint64 loaded_vram_bytes = 3;
+  google.protobuf.Timestamp ready_at = 4;
+}
+
+// ModelRelease 指示 Agent 准备一个公开 manifest 标识的模型版本。
+message ModelRelease {
+  string model_release_id = 1;
+  string manifest_url = 2;
+  string manifest_sha256 = 3;
+  google.protobuf.Timestamp activate_after = 4;
+}
+
+// TaskOffer 在授予 Lease 前询问节点是否可以接受任务。
+message TaskOffer {
+  string offer_id = 1;
+  string job_id = 2;
+  string attempt_id = 3;
+  string model_release_id = 4;
+  google.protobuf.Timestamp deadline_at = 5;
+  uint32 max_output_tokens = 6;
+  ChatParameters parameters = 7;
+  bytes messages_json_utf8 = 8;
+  string payload_digest = 9;
+}
+
+// ChatParameters 只包含第一版支持的生成参数。
+message ChatParameters {
+  double temperature = 1;
+  double top_p = 2;
+  uint32 max_tokens = 3;
+  repeated string stop = 4;
+}
+
+// OfferReply 对同一 offer_id 重复发送时必须保持相同决定。
+message OfferReply {
+  string offer_id = 1;
+  OfferDecision decision = 2;
+  string rejection_code = 3;
+  google.protobuf.Timestamp decided_at = 4;
+}
+
+// LeaseGranted 是节点执行特定 Attempt 的唯一有效授权。
+message LeaseGranted {
+  string offer_id = 1;
+  string job_id = 2;
+  string attempt_id = 3;
+  string lease_id = 4;
+  uint64 lease_epoch = 5;
+  google.protobuf.Timestamp expires_at = 6;
+}
+
+// LeaseRenewal 请求续租，不能复活已经过期或被撤销的 Lease。
+message LeaseRenewal {
+  string lease_id = 1;
+  uint64 lease_epoch = 2;
+  google.protobuf.Timestamp requested_at = 3;
+  RuntimeProgress progress = 4;
+}
+
+// RuntimeProgress 只报告进度与资源数据，不传输生成正文。
+message RuntimeProgress {
+  uint32 generated_tokens = 1;
+  uint64 elapsed_milliseconds = 2;
+  uint32 gpu_temperature_millicelsius = 3;
+}
+
+// LeaseRevoked 要求节点停止提交指定 Lease 的结果。
+message LeaseRevoked {
+  string lease_id = 1;
+  uint64 lease_epoch = 2;
+  LeaseRevokeReason reason = 3;
+  google.protobuf.Timestamp revoked_at = 4;
+}
+
+// ChatResult 仅通过活动连接返回正文，持久化消费者必须丢弃 content。
+message ChatResult {
+  string job_id = 1;
+  string attempt_id = 2;
+  string lease_id = 3;
+  uint64 lease_epoch = 4;
+  string model_release_id = 5;
+  FinishReason finish_reason = 6;
+  string content = 7;
+  TokenUsage usage = 8;
+  RuntimeUsage runtime = 9;
+  google.protobuf.Timestamp completed_at = 10;
+}
+
+// TokenUsage 中的 Token 数量均为非负整数。
+message TokenUsage {
+  uint32 prompt_tokens = 1;
+  uint32 completion_tokens = 2;
+  uint32 total_tokens = 3;
+}
+
+// RuntimeUsage 的时间单位统一为毫秒，显存单位统一为字节。
+message RuntimeUsage {
+  uint64 load_milliseconds = 1;
+  uint64 prompt_eval_milliseconds = 2;
+  uint64 generation_milliseconds = 3;
+  double tokens_per_second = 4;
+  uint64 gpu_milliseconds = 5;
+  uint64 peak_vram_bytes = 6;
+}
+
+// DrainRequested 表示资源主要求停止接收新任务。
+message DrainRequested {
+  google.protobuf.Timestamp requested_at = 1;
+  google.protobuf.Timestamp force_offline_at = 2;
+}
+
+// DrainCommand 指示节点进入排水，不代表可以强制执行宿主机命令。
+message DrainCommand {
+  DrainReason reason = 1;
+  google.protobuf.Timestamp deadline_at = 2;
+}
+
+// ConfigUpdate 只允许版本化的公开配置引用。
+message ConfigUpdate {
+  string config_version = 1;
+  string config_url = 2;
+  string config_sha256 = 3;
+}
+
+// UpgradeNotice 指示组件版本升级及强制生效时间。
+message UpgradeNotice {
+  string component = 1;
+  string version = 2;
+  string manifest_url = 3;
+  string manifest_sha256 = 4;
+  google.protobuf.Timestamp required_after = 5;
+}
+
+// NodeError 是节点返回的稳定、安全错误摘要。
+message NodeError {
+  string related_message_id = 1;
+  NodeErrorCode code = 2;
+  bool retryable = 3;
+  string safe_detail = 4;
+  google.protobuf.Timestamp occurred_at = 5;
+}
+
+// ProtocolError 表示 Control 拒绝消息或要求节点重新同步。
+message ProtocolError {
+  string related_message_id = 1;
+  ProtocolErrorCode code = 2;
+  bool retryable = 3;
+  string safe_detail = 4;
+}
+
+enum NodePlatform {
+  NODE_PLATFORM_UNSPECIFIED = 0;
+  NODE_PLATFORM_WINDOWS = 1;
+  NODE_PLATFORM_UBUNTU = 2;
+}
+
+enum NodeState {
+  NODE_STATE_UNSPECIFIED = 0;
+  NODE_STATE_CANDIDATE = 1;
+  NODE_STATE_VERIFYING = 2;
+  NODE_STATE_READY = 3;
+  NODE_STATE_RESERVED = 4;
+  NODE_STATE_RUNNING = 5;
+  NODE_STATE_DRAINING = 6;
+  NODE_STATE_OFFLINE = 7;
+  NODE_STATE_QUARANTINED = 8;
+}
+
+enum CheckStatus {
+  CHECK_STATUS_UNSPECIFIED = 0;
+  CHECK_STATUS_PASSED = 1;
+  CHECK_STATUS_FAILED = 2;
+  CHECK_STATUS_WARNING = 3;
+}
+
+enum OfferDecision {
+  OFFER_DECISION_UNSPECIFIED = 0;
+  OFFER_DECISION_ACCEPTED = 1;
+  OFFER_DECISION_REJECTED = 2;
+}
+
+enum LeaseRevokeReason {
+  LEASE_REVOKE_REASON_UNSPECIFIED = 0;
+  LEASE_REVOKE_REASON_EXPIRED = 1;
+  LEASE_REVOKE_REASON_DRAINING = 2;
+  LEASE_REVOKE_REASON_ATTEMPT_REPLACED = 3;
+  LEASE_REVOKE_REASON_POLICY = 4;
+}
+
+enum FinishReason {
+  FINISH_REASON_UNSPECIFIED = 0;
+  FINISH_REASON_STOP = 1;
+  FINISH_REASON_LENGTH = 2;
+}
+
+enum DrainReason {
+  DRAIN_REASON_UNSPECIFIED = 0;
+  DRAIN_REASON_OWNER_REQUESTED = 1;
+  DRAIN_REASON_SCHEDULE = 2;
+  DRAIN_REASON_HEALTH = 3;
+  DRAIN_REASON_UPGRADE = 4;
+  DRAIN_REASON_OPERATOR = 5;
+}
+
+enum NodeErrorCode {
+  NODE_ERROR_CODE_UNSPECIFIED = 0;
+  NODE_ERROR_CODE_PREFLIGHT_FAILED = 1;
+  NODE_ERROR_CODE_MODEL_UNAVAILABLE = 2;
+  NODE_ERROR_CODE_MODEL_INTEGRITY_FAILED = 3;
+  NODE_ERROR_CODE_GPU_BUSY = 4;
+  NODE_ERROR_CODE_GPU_OUT_OF_MEMORY = 5;
+  NODE_ERROR_CODE_RUNTIME_FAILED = 6;
+  NODE_ERROR_CODE_DEADLINE_EXCEEDED = 7;
+  NODE_ERROR_CODE_LEASE_INVALID = 8;
+  NODE_ERROR_CODE_PAYLOAD_INVALID = 9;
+}
+
+enum ProtocolErrorCode {
+  PROTOCOL_ERROR_CODE_UNSPECIFIED = 0;
+  PROTOCOL_ERROR_CODE_INVALID_MESSAGE = 1;
+  PROTOCOL_ERROR_CODE_UNSUPPORTED_VERSION = 2;
+  PROTOCOL_ERROR_CODE_IDENTITY_MISMATCH = 3;
+  PROTOCOL_ERROR_CODE_STALE_CONNECTION_EPOCH = 4;
+  PROTOCOL_ERROR_CODE_DUPLICATE_MESSAGE_CONFLICT = 5;
+  PROTOCOL_ERROR_CODE_LEASE_NOT_ACTIVE = 6;
+  PROTOCOL_ERROR_CODE_RESULT_TOO_LATE = 7;
+  PROTOCOL_ERROR_CODE_RATE_LIMITED = 8;
+}

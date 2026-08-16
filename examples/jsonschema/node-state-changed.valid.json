@@ -1,0 +1,1 @@
+{"event_id":"0198a6aa-7d80-7000-8000-000000000001","event_type":"NodeStateChanged","schema_version":"1.0","idempotency_key":"node:node_019abc:state:42","node_id":"node_019abc","previous_state":"VERIFYING","state":"READY","reason_code":"preflight_passed","occurred_at":"2026-08-14T08:00:00Z","future_optional_field":"ignored"}

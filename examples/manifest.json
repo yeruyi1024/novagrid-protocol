@@ -1,0 +1,24 @@
+{
+  "openapi": [
+    {"file": "openapi/models-response.valid.json", "schema": "ModelList", "valid": true},
+    {"file": "openapi/chat-request.valid.json", "schema": "ChatCompletionRequest", "valid": true},
+    {"file": "openapi/chat-request.boundary.json", "schema": "ChatCompletionRequest", "valid": true},
+    {"file": "openapi/chat-response.valid.json", "schema": "ChatCompletionResponse", "valid": true},
+    {"file": "openapi/error-response.valid.json", "schema": "ErrorResponse", "valid": true},
+    {"file": "openapi/chat-request.stream.invalid.json", "schema": "ChatCompletionRequest", "valid": false},
+    {"file": "openapi/chat-request.tools.invalid.json", "schema": "ChatCompletionRequest", "valid": false},
+    {"file": "openapi/chat-request.multimodal.invalid.json", "schema": "ChatCompletionRequest", "valid": false},
+    {"file": "openapi/chat-request.role.invalid.json", "schema": "ChatCompletionRequest", "valid": false},
+    {"file": "openapi/chat-request.max-tokens.invalid.json", "schema": "ChatCompletionRequest", "valid": false}
+  ],
+  "jsonschema": [
+    {"file": "jsonschema/model-manifest.valid.json", "schema": "jsonschema/model-manifest-v1.json", "valid": true},
+    {"file": "jsonschema/model-manifest.unknown-optional.valid.json", "schema": "jsonschema/model-manifest-v1.json", "valid": true},
+    {"file": "jsonschema/model-manifest.sha256.invalid.json", "schema": "jsonschema/model-manifest-v1.json", "valid": false},
+    {"file": "jsonschema/update-manifest.valid.json", "schema": "jsonschema/update-manifest-v1.json", "valid": true},
+    {"file": "jsonschema/update-manifest.unsigned.invalid.json", "schema": "jsonschema/update-manifest-v1.json", "valid": false},
+    {"file": "jsonschema/node-state-changed.valid.json", "schema": "jsonschema/events/node-state-changed-v1.json", "valid": true},
+    {"file": "jsonschema/usage-recorded.valid.json", "schema": "jsonschema/events/usage-recorded-v1.json", "valid": true},
+    {"file": "jsonschema/usage-recorded.attempts.invalid.json", "schema": "jsonschema/events/usage-recorded-v1.json", "valid": false}
+  ]
+}
