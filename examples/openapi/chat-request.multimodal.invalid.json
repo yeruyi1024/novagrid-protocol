@@ -1,0 +1,1 @@
+{"model":"novagrid-chat-7b-v1","messages":[{"role":"user","content":[{"type":"text","text":"测试"},{"type":"image_url","image_url":{"url":"https://invalid.example/image.png"}}]}]}

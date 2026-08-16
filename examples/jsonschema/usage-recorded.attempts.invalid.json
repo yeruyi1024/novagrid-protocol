@@ -1,0 +1,1 @@
+{"event_id":"0198a6aa-7d80-7000-8000-000000000003","event_type":"UsageRecorded","schema_version":"1.0","idempotency_key":"usage:job_019bad:final:v1","job_id":"job_019bad","brand_model":"novagrid-chat-7b-v1","prompt_tokens":24,"completion_tokens":86,"total_tokens":110,"gpu_milliseconds":4890,"attempts":3,"successful_attempt":3,"occurred_at":"2026-08-14T08:00:00Z"}

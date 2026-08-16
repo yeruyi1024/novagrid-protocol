@@ -1,0 +1,1 @@
+{"model":"novagrid-chat-7b-v1","messages":[{"role":"user","content":"一"}],"temperature":0,"top_p":1,"max_tokens":1,"stop":["结束"],"stream":false}

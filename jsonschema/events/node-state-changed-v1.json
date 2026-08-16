@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://protocol.novagrid.invalid/jsonschema/events/node-state-changed-v1.json",
+  "title": "NovaGrid Node State Changed Event v1",
+  "description": "节点状态变化事件，不包含设备指纹、证书、客户正文或内部风控字段。",
+  "type": "object",
+  "required": ["event_id", "event_type", "schema_version", "idempotency_key", "node_id", "previous_state", "state", "reason_code", "occurred_at"],
+  "properties": {
+    "event_id": {"type": "string", "format": "uuid"},
+    "event_type": {"const": "NodeStateChanged"},
+    "schema_version": {"const": "1.0"},
+    "idempotency_key": {"type": "string", "minLength": 16, "maxLength": 256},
+    "node_id": {"type": "string", "pattern": "^node_[A-Za-z0-9]+$"},
+    "previous_state": {"$ref": "#/$defs/state"},
+    "state": {"$ref": "#/$defs/state"},
+    "reason_code": {"type": "string", "minLength": 1, "maxLength": 64},
+    "occurred_at": {"type": "string", "format": "date-time"}
+  },
+  "additionalProperties": true,
+  "$defs": {
+    "state": {
+      "enum": ["CANDIDATE", "VERIFYING", "READY", "RESERVED", "RUNNING", "DRAINING", "OFFLINE", "QUARANTINED"]
+    }
+  }
+}

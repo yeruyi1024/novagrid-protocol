@@ -1,0 +1,1 @@
+{"id":"chatcmpl_019abc","object":"chat.completion","created":1786500001,"model":"novagrid-chat-7b-v1","choices":[{"index":0,"message":{"role":"assistant","content":"让闲置算力连接真实需求"},"finish_reason":"stop"}],"usage":{"prompt_tokens":24,"completion_tokens":10,"total_tokens":34}}

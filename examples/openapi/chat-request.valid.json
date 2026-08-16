@@ -1,0 +1,1 @@
+{"model":"novagrid-chat-7b-v1","messages":[{"role":"system","content":"你是一名中文写作助手。"},{"role":"user","content":"请写一个不超过二十字的标题。"}],"temperature":0.7,"top_p":0.9,"max_tokens":512,"stop":null,"stream":false}

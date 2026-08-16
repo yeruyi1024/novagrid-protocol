@@ -1,0 +1,39 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://protocol.novagrid.invalid/jsonschema/model-manifest-v1.json",
+  "title": "NovaGrid Model Manifest v1",
+  "description": "公开模型制品清单。未知可选字段必须被消费者忽略；所有大小均为整数并显式使用字节。",
+  "type": "object",
+  "required": ["schema_version", "model_release_id", "brand_model", "engine", "engine_version", "artifacts", "created_at"],
+  "properties": {
+    "schema_version": {"const": "1.0"},
+    "model_release_id": {"type": "string", "pattern": "^modelrel_[A-Za-z0-9]+$"},
+    "brand_model": {"const": "novagrid-chat-7b-v1"},
+    "engine": {"const": "llama.cpp"},
+    "engine_version": {"type": "string", "minLength": 1, "maxLength": 64},
+    "context_tokens": {"type": "integer", "minimum": 512, "maximum": 32768},
+    "minimum_vram_bytes": {"type": "integer", "minimum": 12884901888},
+    "artifacts": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"$ref": "#/$defs/artifact"}
+    },
+    "created_at": {"type": "string", "format": "date-time"}
+  },
+  "additionalProperties": true,
+  "$defs": {
+    "artifact": {
+      "type": "object",
+      "required": ["platform", "architecture", "url", "sha256", "size_bytes"],
+      "properties": {
+        "platform": {"enum": ["windows", "ubuntu"]},
+        "architecture": {"const": "amd64"},
+        "url": {"type": "string", "format": "uri", "pattern": "^https://"},
+        "sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+        "size_bytes": {"type": "integer", "minimum": 1},
+        "signature": {"type": "string", "minLength": 16, "maxLength": 4096}
+      },
+      "additionalProperties": true
+    }
+  }
+}
